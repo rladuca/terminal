@@ -15,10 +15,14 @@
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="HwndTerminal.cpp" />
+    <ClCompile Include="TerminalControlUiaProvider.cpp" />
+    <ClCompile Include="UiaTextRange.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HwndTerminal.hpp" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="TerminalControlUiaProvider.hpp" />
+    <ClInclude Include="UiaTextRange.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\terminal\input\lib\terminalinput.vcxproj">

@@ -3,6 +3,13 @@
 // Licensed under the MIT license.
 // </copyright>
 
+using System;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Automation.Peers;
+using System.Windows.Automation.Provider;
+using System.Windows.Interop;
+
 namespace Microsoft.Terminal.Wpf
 {
     using System;
@@ -71,6 +78,8 @@ namespace Microsoft.Terminal.Wpf
         /// Gets the character columns available to the terminal.
         /// </summary>
         internal int Columns { get; private set; }
+
+        internal IntPtr Hwnd => this.hwnd;
 
         /// <summary>
         /// Sets the connection to the terminal backend.
@@ -157,6 +166,23 @@ namespace Microsoft.Terminal.Wpf
             this.Columns = dimensions.X;
 
             this.connection?.Resize((uint)dimensions.Y, (uint)dimensions.X);
+        }
+
+        protected override IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            switch ((NativeMethods.WindowMessage)msg)
+            {
+                case NativeMethods.WindowMessage.WM_GETOBJECT:
+                    handled = false;
+                    return IntPtr.Zero;
+            }
+
+            return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
+        }
+
+        protected override AutomationPeer OnCreateAutomationPeer()
+        {
+            return new TerminalContainerAutomationPeer(this);
         }
 
         /// <inheritdoc/>

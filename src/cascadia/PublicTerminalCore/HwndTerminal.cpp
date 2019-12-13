@@ -3,24 +3,41 @@
 
 #include "pch.h"
 #include "HwndTerminal.hpp"
+#include "TerminalControlUiaProvider.hpp"
 #include <DefaultSettings.h>
 #include "../../renderer/base/Renderer.hpp"
 #include "../../renderer/dx/DxRenderer.hpp"
 #include "../../cascadia/TerminalCore/Terminal.hpp"
 #include "../../types/viewport.cpp"
 #include "../../types/inc/GlyphWidth.hpp"
+#include <assert.h>
 
+using namespace Microsoft::Terminal::Wpf;
 using namespace ::Microsoft::Terminal::Core;
 
 static LPCWSTR term_window_class = L"HwndTerminalClass";
 
-static LRESULT CALLBACK HwndTerminalWndProc(
+LRESULT CALLBACK HwndTerminal::HwndTerminalWndProc(
     HWND hwnd,
     UINT uMsg,
     WPARAM wParam,
-    LPARAM lParam) noexcept
+    LPARAM lParam)
 {
-    return DefWindowProcW(hwnd, uMsg, wParam, lParam);
+    HwndTerminal* terminal = reinterpret_cast<HwndTerminal*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+
+    if (terminal)
+    {
+        auto lock = terminal->_terminal->LockForWriting();
+        switch (uMsg)
+        {
+        case WM_GETOBJECT:
+            if (static_cast<long>(lParam) == static_cast<long>(UiaRootObjectId))
+            {
+                return UiaReturnRawElementProvider(hwnd, wParam, lParam, terminal->_GetUiaProvider());
+            }
+        }
+    }
+    return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 static bool RegisterTermClass(HINSTANCE hInstance) noexcept
@@ -32,7 +49,7 @@ static bool RegisterTermClass(HINSTANCE hInstance) noexcept
     }
 
     wc.style = 0;
-    wc.lpfnWndProc = HwndTerminalWndProc;
+    wc.lpfnWndProc = HwndTerminal::HwndTerminalWndProc;
     wc.cbClsExtra = 0;
     wc.cbWndExtra = 0;
     wc.hInstance = hInstance;
@@ -48,6 +65,7 @@ static bool RegisterTermClass(HINSTANCE hInstance) noexcept
 HwndTerminal::HwndTerminal(HWND parentHwnd) :
     _desiredFont{ DEFAULT_FONT_FACE, 0, 10, { 0, 14 }, CP_UTF8 },
     _actualFont{ DEFAULT_FONT_FACE, 0, 10, { 0, 14 }, CP_UTF8, false }
+    _uiaProvider{ nullptr }
 {
     HINSTANCE hInstance = wil::GetModuleInstanceHandle();
 
@@ -69,6 +87,8 @@ HwndTerminal::HwndTerminal(HWND parentHwnd) :
             nullptr,
             hInstance,
             nullptr));
+
+        SetWindowLongPtr(_hwnd.get(), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
     }
 }
 
@@ -141,6 +161,16 @@ void HwndTerminal::RegisterWriteCallback(const void _stdcall callback(wchar_t*))
     });
 }
 
+::Microsoft::Console::Types::IUiaData* HwndTerminal::GetUiaData() const
+{
+    return _terminal.get();
+}
+
+HWND HwndTerminal::GetHwnd() const
+{
+    return _hwnd.get();
+}
+
 void HwndTerminal::_UpdateFont(int newDpi)
 {
     auto lock = _terminal->LockForWriting();
@@ -148,6 +178,24 @@ void HwndTerminal::_UpdateFont(int newDpi)
     // TODO: MSFT:20895307 If the font doesn't exist, this doesn't
     //      actually fail. We need a way to gracefully fallback.
     _renderer->TriggerFontChange(newDpi, _desiredFont, _actualFont);
+}
+
+IRawElementProviderSimple* HwndTerminal::_GetUiaProvider()
+{
+    if (nullptr == _uiaProvider)
+    {
+        try
+        {
+            THROW_IF_FAILED(::Microsoft::WRL::MakeAndInitialize<TerminalControlUiaProvider>(&_uiaProvider, this->GetUiaData(), this));
+        }
+        catch (...)
+        {
+            LOG_HR(wil::ResultFromCaughtException());
+            _uiaProvider = nullptr;
+        }
+    }
+
+    return _uiaProvider.Get();
 }
 
 HRESULT HwndTerminal::Refresh(const SIZE windowSize, _Out_ COORD* dimensions)
