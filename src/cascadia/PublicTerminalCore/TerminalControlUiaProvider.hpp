@@ -37,6 +37,7 @@ namespace Microsoft::Terminal::Wpf
         IFACEMETHODIMP Navigate(_In_ NavigateDirection direction,
                                 _COM_Outptr_result_maybenull_ IRawElementProviderFragment** ppProvider) override;
         IFACEMETHODIMP get_BoundingRectangle(_Out_ UiaRect* pRect) override;
+        IFACEMETHODIMP get_HostRawElementProvider(IRawElementProviderSimple** ppProvider) noexcept override;
         IFACEMETHODIMP get_FragmentRoot(_COM_Outptr_result_maybenull_ IRawElementProviderFragmentRoot** ppProvider) override;
 
         const COORD GetFontSize() const;

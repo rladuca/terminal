@@ -140,7 +140,7 @@ void HwndTerminal::RegisterScrollCallback(std::function<void(int, int, int)> cal
 
 void HwndTerminal::RegisterWriteCallback(const void _stdcall callback(wchar_t*))
 {
-    _terminal->SetWriteInputCallback([=](std::wstring & input) noexcept {
+    _terminal->SetWriteInputCallback([=](std::wstring& input) noexcept {
         const wchar_t* text = input.c_str();
         const size_t textChars = wcslen(text) + 1;
         const size_t textBytes = textChars * sizeof(wchar_t);
@@ -460,4 +460,22 @@ void _stdcall TerminalSetCursorVisible(void* terminal, const bool visible)
 {
     const auto publicTerminal = static_cast<const HwndTerminal*>(terminal);
     publicTerminal->_terminal->SetCursorVisible(visible);
+}
+
+COORD HwndTerminal::GetFontSize()
+{
+    return _actualFont.GetSize();
+}
+
+RECT HwndTerminal::GetBounds()
+{
+    RECT windowRect;
+    GetWindowRect(_hwnd.get(), &windowRect);
+    return windowRect;
+}
+
+HRESULT HwndTerminal::GetHostUiaProvider(IRawElementProviderSimple** provider)
+{
+
+    return UiaHostProviderFromHwnd(_hwnd.get(), provider);
 }

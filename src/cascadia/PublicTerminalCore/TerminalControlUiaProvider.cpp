@@ -22,7 +22,7 @@ HRESULT TerminalControlUiaProvider::RuntimeClassInitialize(_In_ ::Microsoft::Con
 }
 
 IFACEMETHODIMP TerminalControlUiaProvider::Navigate(_In_ NavigateDirection direction,
-                                                _COM_Outptr_result_maybenull_ IRawElementProviderFragment** ppProvider)
+                                                    _COM_Outptr_result_maybenull_ IRawElementProviderFragment** ppProvider)
 {
     // TODO GitHub #1914: Re-attach Tracing to UIA Tree
     /*ApiMsgNavigate apiMsg;
@@ -34,8 +34,10 @@ IFACEMETHODIMP TerminalControlUiaProvider::Navigate(_In_ NavigateDirection direc
     {
         try
         {
-            // TODO GitHub #2102: UIA Tree Navigation
-            //_pUiaParent->QueryInterface(IID_PPV_ARGS(ppProvider));
+            IRawElementProviderSimple* pProvider;
+            _controlInfo->GetHostUiaProvider(&pProvider);
+
+            pProvider->QueryInterface(IID_PPV_ARGS(ppProvider));
         }
         catch (...)
         {
@@ -62,6 +64,11 @@ IFACEMETHODIMP TerminalControlUiaProvider::get_BoundingRectangle(_Out_ UiaRect* 
     pRect->height = rc.bottom - rc.top;
 
     return S_OK;
+}
+
+IFACEMETHODIMP TerminalControlUiaProvider::get_HostRawElementProvider(_COM_Outptr_result_maybenull_ IRawElementProviderSimple** ppProvider) noexcept
+{
+    return _controlInfo->GetHostUiaProvider(ppProvider);
 }
 
 IFACEMETHODIMP TerminalControlUiaProvider::get_FragmentRoot(_COM_Outptr_result_maybenull_ IRawElementProviderFragmentRoot** ppProvider)
@@ -121,9 +128,9 @@ HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimp
 }
 
 HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimple* const pProvider,
-                                                const Cursor& cursor,
-                                                const std::wstring_view wordDelimiters,
-                                                _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
+                                                    const Cursor& cursor,
+                                                    const std::wstring_view wordDelimiters,
+                                                    _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
 {
     RETURN_HR_IF_NULL(E_INVALIDARG, ppUtr);
     *ppUtr = nullptr;
@@ -134,11 +141,11 @@ HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimp
 }
 
 HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimple* const pProvider,
-                                                const Endpoint start,
-                                                const Endpoint end,
-                                                const bool degenerate,
-                                                const std::wstring_view wordDelimiters,
-                                                _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
+                                                    const Endpoint start,
+                                                    const Endpoint end,
+                                                    const bool degenerate,
+                                                    const std::wstring_view wordDelimiters,
+                                                    _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
 {
     RETURN_HR_IF_NULL(E_INVALIDARG, ppUtr);
     *ppUtr = nullptr;
@@ -149,9 +156,9 @@ HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimp
 }
 
 HRESULT TerminalControlUiaProvider::CreateTextRange(_In_ IRawElementProviderSimple* const pProvider,
-                                                const UiaPoint point,
-                                                const std::wstring_view wordDelimiters,
-                                                _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
+                                                    const UiaPoint point,
+                                                    const std::wstring_view wordDelimiters,
+                                                    _COM_Outptr_result_maybenull_ UiaTextRangeBase** ppUtr)
 {
     RETURN_HR_IF_NULL(E_INVALIDARG, ppUtr);
     *ppUtr = nullptr;
