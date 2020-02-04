@@ -44,9 +44,8 @@ namespace Microsoft::Terminal::Wpf
         // specific endpoint range
         HRESULT RuntimeClassInitialize(_In_ Microsoft::Console::Types::IUiaData* pData,
                                        _In_ IRawElementProviderSimple* const pProvider,
-                                       const Endpoint start,
-                                       const Endpoint end,
-                                       const bool degenerate,
+                                       const COORD start,
+                                       const COORD end,
                                        const std::wstring_view wordDelimiters = DefaultWordDelimiter);
 
         // range from a UiaPoint
@@ -61,7 +60,7 @@ namespace Microsoft::Terminal::Wpf
         IFACEMETHODIMP FindText(_In_ BSTR text,
                                 _In_ BOOL searchBackward,
                                 _In_ BOOL ignoreCase,
-                                _Outptr_result_maybenull_ ITextRangeProvider** ppRetVal) override;
+                                _Outptr_result_maybenull_ ITextRangeProvider** ppRetVal) noexcept override;
 
     protected:
         void _ChangeViewport(const SMALL_RECT NewWindow) override;
