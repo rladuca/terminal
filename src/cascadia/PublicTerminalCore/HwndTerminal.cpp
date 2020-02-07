@@ -62,10 +62,11 @@ static bool RegisterTermClass(HINSTANCE hInstance) noexcept
     return RegisterClassW(&wc) != 0;
 }
 
-HwndTerminal::HwndTerminal(HWND parentHwnd) :
+HwndTerminal::HwndTerminal(HWND parentHwnd, IRawElementProviderSimple* _stdcall hostProviderCallback()) :
     _desiredFont{ DEFAULT_FONT_FACE, 0, 10, { 0, 14 }, CP_UTF8 },
     _actualFont{ DEFAULT_FONT_FACE, 0, 10, { 0, 14 }, CP_UTF8, false },
-    _uiaProvider{ nullptr }
+    _uiaProvider{ nullptr },
+    hostProviderCallback{ hostProviderCallback }
 {
     HINSTANCE hInstance = wil::GetModuleInstanceHandle();
 
@@ -232,9 +233,9 @@ void HwndTerminal::SendOutput(std::wstring_view data)
     _terminal->Write(data);
 }
 
-HRESULT _stdcall CreateTerminal(HWND parentHwnd, _Out_ void** hwnd, _Out_ void** terminal)
+HRESULT _stdcall CreateTerminal(HWND parentHwnd, IRawElementProviderSimple* _stdcall hostProviderCallback(), _Out_ void** hwnd, _Out_ void** terminal)
 {
-    auto _terminal = std::make_unique<HwndTerminal>(parentHwnd);
+    auto _terminal = std::make_unique<HwndTerminal>(parentHwnd, hostProviderCallback);
     RETURN_IF_FAILED(_terminal->Initialize());
 
     *hwnd = _terminal->_hwnd.get();
@@ -476,6 +477,7 @@ RECT HwndTerminal::GetBounds()
 
 HRESULT HwndTerminal::GetHostUiaProvider(IRawElementProviderSimple** provider)
 {
-
-    return UiaHostProviderFromHwnd(_hwnd.get(), provider);
+    //*provider = hostProviderCallback();
+    UiaHostProviderFromHwnd(_hwnd.get(), provider);
+    return S_OK;
 }

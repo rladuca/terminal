@@ -34,10 +34,10 @@ IFACEMETHODIMP TerminalControlUiaProvider::Navigate(_In_ NavigateDirection direc
     {
         try
         {
-            IRawElementProviderSimple* pProvider;
+            /*IRawElementProviderSimple* pProvider;
             _controlInfo->GetHostUiaProvider(&pProvider);
 
-            pProvider->QueryInterface(IID_PPV_ARGS(ppProvider));
+            pProvider->QueryInterface(IID_PPV_ARGS(ppProvider));*/
         }
         catch (...)
         {
@@ -68,7 +68,11 @@ IFACEMETHODIMP TerminalControlUiaProvider::get_BoundingRectangle(_Out_ UiaRect* 
 
 IFACEMETHODIMP TerminalControlUiaProvider::get_HostRawElementProvider(_COM_Outptr_result_maybenull_ IRawElementProviderSimple** ppProvider) noexcept
 {
-    return _controlInfo->GetHostUiaProvider(ppProvider);
+    RETURN_HR_IF(E_INVALIDARG, ppProvider == nullptr);
+    *ppProvider = nullptr;
+
+    return S_OK;
+    //return _controlInfo->GetHostUiaProvider(ppProvider);
 }
 
 IFACEMETHODIMP TerminalControlUiaProvider::get_FragmentRoot(_COM_Outptr_result_maybenull_ IRawElementProviderFragmentRoot** ppProvider)

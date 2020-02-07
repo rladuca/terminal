@@ -15,6 +15,7 @@ namespace Microsoft.Terminal.Wpf
     using System;
     using System.Runtime.InteropServices;
     using System.Windows;
+    using System.Windows.Automation;
     using System.Windows.Interop;
     using System.Windows.Media;
     using System.Windows.Threading;
@@ -33,7 +34,8 @@ namespace Microsoft.Terminal.Wpf
         private DispatcherTimer blinkTimer;
         private NativeMethods.ScrollCallback scrollCallback;
         private NativeMethods.WriteCallback writeCallback;
-
+        private NativeMethods.UiaProviderCallback uiaCallback;
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="TerminalContainer"/> class.
         /// </summary>
@@ -42,7 +44,7 @@ namespace Microsoft.Terminal.Wpf
             this.MessageHook += this.TerminalContainer_MessageHook;
             this.GotFocus += this.TerminalContainer_GotFocus;
             this.Focusable = true;
-
+    
             var blinkTime = NativeMethods.GetCaretBlinkTime();
 
             if (blinkTime != uint.MaxValue)
@@ -80,6 +82,8 @@ namespace Microsoft.Terminal.Wpf
         internal int Columns { get; private set; }
 
         internal IntPtr Hwnd => this.hwnd;
+
+        internal Lazy<TerminalContainerAutomationPeer> AutomationPeer { get; set; }
 
         /// <summary>
         /// Sets the connection to the terminal backend.
@@ -180,11 +184,6 @@ namespace Microsoft.Terminal.Wpf
             return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
         }
 
-        protected override AutomationPeer OnCreateAutomationPeer()
-        {
-            return new TerminalContainerAutomationPeer(this);
-        }
-
         /// <inheritdoc/>
         protected override void OnDpiChanged(DpiScale oldDpi, DpiScale newDpi)
         {
@@ -198,8 +197,8 @@ namespace Microsoft.Terminal.Wpf
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
             var dpiScale = VisualTreeHelper.GetDpi(this);
-
-            NativeMethods.CreateTerminal(hwndParent.Handle, out this.hwnd, out this.terminal);
+            this.uiaCallback = this.OnGetProvider;
+            NativeMethods.CreateTerminal(hwndParent.Handle, this.uiaCallback, out this.hwnd, out this.terminal);
 
             this.scrollCallback = this.OnScroll;
             this.writeCallback = this.OnWrite;
@@ -350,6 +349,11 @@ namespace Microsoft.Terminal.Wpf
         private void OnWrite(string data)
         {
             this.connection?.WriteInput(data);
+        }
+
+        private IRawElementProviderSimple OnGetProvider()
+        {
+            return this.AutomationPeer.Value.GetProvider();
         }
     }
 }

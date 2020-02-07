@@ -7,6 +7,7 @@ namespace Microsoft.Terminal.Wpf
 {
     using System;
     using System.Runtime.InteropServices;
+    using System.Windows.Automation.Provider;
 
 #pragma warning disable SA1600 // Elements should be documented
     internal static class NativeMethods
@@ -18,6 +19,9 @@ namespace Microsoft.Terminal.Wpf
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
         public delegate void WriteCallback([In, MarshalAs(UnmanagedType.LPWStr)] string data);
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate IRawElementProviderSimple UiaProviderCallback();
 
         public enum WindowMessage : int
         {
@@ -162,7 +166,7 @@ namespace Microsoft.Terminal.Wpf
         }
 
         [DllImport("PublicTerminalCore.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall)]
-        public static extern uint CreateTerminal(IntPtr parent, out IntPtr hwnd, out IntPtr terminal);
+        public static extern uint CreateTerminal(IntPtr parent, [MarshalAs(UnmanagedType.FunctionPtr)]UiaProviderCallback callback, out IntPtr hwnd, out IntPtr terminal);
 
         [DllImport("PublicTerminalCore.dll", CharSet = CharSet.Unicode, CallingConvention = CallingConvention.StdCall)]
         public static extern void TerminalSendOutput(IntPtr terminal, string lpdata);
