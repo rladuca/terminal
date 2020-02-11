@@ -19,6 +19,16 @@ namespace Microsoft.Terminal.Wpf
         {
         }
 
+        protected override bool IsContentElementCore()
+        {
+            return false;
+        }
+
+        protected override bool IsControlElementCore()
+        {
+            return false;
+        }
+
         protected override string GetClassNameCore()
         {
             return "TerminalContainerHost";
@@ -36,7 +46,7 @@ namespace Microsoft.Terminal.Wpf
             HostedWindowWrapper host = null;
             
             TerminalContainer wfh = (TerminalContainer)Owner;
-            IntPtr hwnd = wfh.Hwnd;
+            IntPtr hwnd = wfh.nw.Handle;
  
             if(hwnd != IntPtr.Zero)
             {

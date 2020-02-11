@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Automation.Peers;
 using System.Windows.Automation.Provider;
 using System.Windows.Interop;
+using System.Windows.Forms;
 
 namespace Microsoft.Terminal.Wpf
 {
@@ -189,7 +190,7 @@ namespace Microsoft.Terminal.Wpf
                         if (el != null)
                         {
                             //This requires FullTrust but we already have it.
-                            result = AutomationInteropProvider.ReturnRawElementProvider(Handle, wParam, lParam, el);
+                            result = AutomationInteropProvider.ReturnRawElementProvider(nw.Handle, wParam, lParam, el);
                         }
                     }
                     return result;
@@ -206,13 +207,26 @@ namespace Microsoft.Terminal.Wpf
                 NativeMethods.TerminalDpiChanged(this.terminal, (int)(NativeMethods.USER_DEFAULT_SCREEN_DPI * newDpi.DpiScaleX));
             }
         }
-
+       public NativeWindow nw;
         /// <inheritdoc/>
         protected override HandleRef BuildWindowCore(HandleRef hwndParent)
         {
+            const int WS_CHILD = 0x40000000,
+                         WS_VISIBLE = 0x10000000;
+
+            CreateParams cp = new CreateParams()
+            {
+                Style = WS_CHILD | WS_VISIBLE,
+                Parent=hwndParent.Handle,
+                X=0,Y=0,Height=1000,Width=1000
+            };
+
+            nw = new NativeWindow();
+            nw.CreateHandle(cp);
+
             var dpiScale = VisualTreeHelper.GetDpi(this);
             this.uiaCallback = this.OnGetProvider;
-            NativeMethods.CreateTerminal(hwndParent.Handle, this.uiaCallback, out this.hwnd, out this.terminal);
+            NativeMethods.CreateTerminal(nw.Handle, this.uiaCallback, out this.hwnd, out this.terminal);
 
             this.scrollCallback = this.OnScroll;
             this.writeCallback = this.OnWrite;
@@ -235,7 +249,7 @@ namespace Microsoft.Terminal.Wpf
                 NativeMethods.TerminalSetCursorVisible(this.terminal, false);
             }
 
-            return new HandleRef(this, this.hwnd);
+            return new HandleRef(this, nw.Handle);
         }
 
         /// <inheritdoc/>
@@ -258,7 +272,7 @@ namespace Microsoft.Terminal.Wpf
 
         private IntPtr TerminalContainer_MessageHook(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
-            if (hwnd == this.hwnd)
+            if (hwnd == nw.Handle)
             {
                 switch ((NativeMethods.WindowMessage)msg)
                 {
@@ -271,7 +285,7 @@ namespace Microsoft.Terminal.Wpf
                         break;
                     case NativeMethods.WindowMessage.WM_MOUSEACTIVATE:
                         this.Focus();
-                        NativeMethods.SetFocus(this.hwnd);
+                        NativeMethods.SetFocus(nw.Handle);
                         break;
                     case NativeMethods.WindowMessage.WM_LBUTTONDOWN:
                         this.LeftClickHandler((int)lParam);
