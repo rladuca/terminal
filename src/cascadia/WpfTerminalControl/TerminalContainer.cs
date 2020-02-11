@@ -41,10 +41,11 @@ namespace Microsoft.Terminal.Wpf
         /// </summary>
         public TerminalContainer()
         {
-            this.MessageHook += this.TerminalContainer_MessageHook;
-            this.GotFocus += this.TerminalContainer_GotFocus;
-            this.Focusable = true;
-    
+            //this.MessageHook += this.TerminalContainer_MessageHook;
+            //this.GotFocus += this.TerminalContainer_GotFocus;
+            //this.Focusable = true;
+            this.Columns = 80;
+                        this.Rows = 25;
             var blinkTime = NativeMethods.GetCaretBlinkTime();
 
             if (blinkTime != uint.MaxValue)
@@ -177,8 +178,21 @@ namespace Microsoft.Terminal.Wpf
             switch ((NativeMethods.WindowMessage)msg)
             {
                 case NativeMethods.WindowMessage.WM_GETOBJECT:
-                    handled = false;
-                    return IntPtr.Zero;
+                    handled = true;
+                    TerminalContainerAutomationPeer peer = UIElementAutomationPeer.CreatePeerForElement(this) as TerminalContainerAutomationPeer;
+                    IntPtr result = IntPtr.Zero;
+                    if(peer != null)
+                    {
+                        // get the element proxy
+                        IRawElementProviderSimple el = peer.GetProvider();
+        
+                        if (el != null)
+                        {
+                            //This requires FullTrust but we already have it.
+                            result = AutomationInteropProvider.ReturnRawElementProvider(Handle, wParam, lParam, el);
+                        }
+                    }
+                    return result;
             }
 
             return base.WndProc(hwnd, msg, wParam, lParam, ref handled);
@@ -229,6 +243,11 @@ namespace Microsoft.Terminal.Wpf
         {
             NativeMethods.DestroyTerminal(this.terminal);
             this.terminal = IntPtr.Zero;
+        }
+
+        protected override AutomationPeer OnCreateAutomationPeer()
+        {
+            return new TerminalContainerAutomationPeer(this);
         }
 
         private void TerminalContainer_GotFocus(object sender, RoutedEventArgs e)

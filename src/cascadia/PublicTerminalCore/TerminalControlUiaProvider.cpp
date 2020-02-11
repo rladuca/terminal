@@ -68,11 +68,7 @@ IFACEMETHODIMP TerminalControlUiaProvider::get_BoundingRectangle(_Out_ UiaRect* 
 
 IFACEMETHODIMP TerminalControlUiaProvider::get_HostRawElementProvider(_COM_Outptr_result_maybenull_ IRawElementProviderSimple** ppProvider) noexcept
 {
-    RETURN_HR_IF(E_INVALIDARG, ppProvider == nullptr);
-    *ppProvider = nullptr;
-
-    return S_OK;
-    //return _controlInfo->GetHostUiaProvider(ppProvider);
+    return _controlInfo->GetHostUiaProvider(ppProvider);
 }
 
 IFACEMETHODIMP TerminalControlUiaProvider::get_FragmentRoot(_COM_Outptr_result_maybenull_ IRawElementProviderFragmentRoot** ppProvider)

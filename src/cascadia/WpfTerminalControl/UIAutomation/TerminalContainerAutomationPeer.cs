@@ -19,25 +19,36 @@ namespace Microsoft.Terminal.Wpf
         {
         }
 
-        internal IRawElementProviderSimple GetProvider()
-        {
-            return ProviderFromPeer(this);
-        }
-
         protected override string GetClassNameCore()
         {
-            return "TerminalControl";
+            return "TerminalContainerHost";
         }
+
+        override protected AutomationControlType GetAutomationControlTypeCore()
+        {
+            return AutomationControlType.Pane;
+        }
+
+        override protected bool IsHwndHost { get { return true; }}
 
         protected override HostedWindowWrapper GetHostRawElementProviderCore()
         {
-            if (this.Owner is TerminalContainer container
-                && container.Hwnd != IntPtr.Zero)
+            HostedWindowWrapper host = null;
+            
+            TerminalContainer wfh = (TerminalContainer)Owner;
+            IntPtr hwnd = wfh.Hwnd;
+ 
+            if(hwnd != IntPtr.Zero)
             {
-                return new HostedWindowWrapper(container.Hwnd);
+                host = new HostedWindowWrapper(hwnd);
             }
+ 
+            return host;
+        }
 
-            return null;
+        internal IRawElementProviderSimple GetProvider()
+        {
+            return ProviderFromPeer(this);
         }
     }
 }

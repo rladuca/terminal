@@ -82,8 +82,8 @@ HwndTerminal::HwndTerminal(HWND parentHwnd, IRawElementProviderSimple* _stdcall 
                 WS_VISIBLE,
             0,
             0,
-            0,
-            0,
+            1000,
+            1000,
             parentHwnd,
             nullptr,
             hInstance,
@@ -477,7 +477,5 @@ RECT HwndTerminal::GetBounds()
 
 HRESULT HwndTerminal::GetHostUiaProvider(IRawElementProviderSimple** provider)
 {
-    //*provider = hostProviderCallback();
-    UiaHostProviderFromHwnd(_hwnd.get(), provider);
-    return S_OK;
+    return UiaHostProviderFromHwnd(_hwnd.get(), provider);
 }
